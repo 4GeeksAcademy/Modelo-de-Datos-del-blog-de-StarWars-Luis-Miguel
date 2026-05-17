@@ -71,6 +71,57 @@ def get_one_person(people_id):
     return jsonify(character.serialize()), 200
 
 
+@app.route('/people', methods=['POST'])
+def create_person():
+    body = request.get_json()
+    
+    if body is None or "name" not in body:
+        return jsonify({"msg": "Faltan datos obligatorios, el campo 'name' es requerido"}), 400
+        
+    exists = Character.query.filter_by(name=body["name"]).first()
+    if exists:
+        return jsonify({"msg": "Ya existe un personaje con ese nombre"}), 400
+
+    new_character = Character(
+        name=body["name"],
+        gender=body.get("gender", None),
+        eye_color=body.get("eye_color", None)
+    )
+    db.session.add(new_character)
+    db.session.commit()
+    return jsonify({"msg": f"Personaje {new_character.name} creado con éxito", "character": new_character.serialize()}), 201
+
+@app.route('/people/<int:people_id>', methods=['PUT'])
+def update_person(people_id):
+    character = Character.query.get(people_id)
+    if not character:
+        return jsonify({"msg": "Personaje no encontrado"}), 404
+        
+    body = request.get_json()
+    if body is None:
+        return jsonify({"msg": "No se enviaron datos para actualizar"}), 400
+        
+    if "name" in body:
+        character.name = body["name"]
+    if "gender" in body:
+        character.gender = body["gender"]
+    if "eye_color" in body:
+        character.eye_color = body["eye_color"]
+        
+    db.session.commit()
+    return jsonify({"msg": "Personaje actualizado con éxito", "character": character.serialize()}), 200
+
+@app.route('/people/<int:people_id>', methods=['DELETE'])
+def delete_person(people_id):
+    character = Character.query.get(people_id)
+    if not character:
+        return jsonify({"msg": "Personaje no encontrado"}), 404
+        
+    db.session.delete(character)
+    db.session.commit()
+    return jsonify({"msg": f"Personaje {character.name} eliminado de la base de datos con éxito"}), 200
+
+
 @app.route('/planets', methods=['GET'])
 def get_all_planets():
     planets = Planet.query.all()
@@ -83,6 +134,57 @@ def get_one_planet(planet_id):
     if not planet:
         return jsonify({"msg": "Planeta no encontrado"}), 404
     return jsonify(planet.serialize()), 200
+
+
+@app.route('/planets', methods=['POST'])
+def create_planet():
+    body = request.get_json()
+    
+    if body is None or "name" not in body:
+        return jsonify({"msg": "Faltan datos obligatorios, el campo 'name' es requerido"}), 400
+        
+    exists = Planet.query.filter_by(name=body["name"]).first()
+    if exists:
+        return jsonify({"msg": "Ya existe un planeta con ese nombre"}), 400
+
+    new_planet = Planet(
+        name=body["name"],
+        climate=body.get("climate", None),
+        terrain=body.get("terrain", None)
+    )
+    db.session.add(new_planet)
+    db.session.commit()
+    return jsonify({"msg": f"Planeta {new_planet.name} creado con éxito", "planet": new_planet.serialize()}), 201
+
+@app.route('/planets/<int:planet_id>', methods=['PUT'])
+def update_planet(planet_id):
+    planet = Planet.query.get(planet_id)
+    if not planet:
+        return jsonify({"msg": "Planeta no encontrado"}), 404
+        
+    body = request.get_json()
+    if body is None:
+        return jsonify({"msg": "No se enviaron datos para actualizar"}), 400
+        
+    if "name" in body:
+        planet.name = body["name"]
+    if "climate" in body:
+        planet.climate = body["climate"]
+    if "terrain" in body:
+        planet.terrain = body["terrain"]
+        
+    db.session.commit()
+    return jsonify({"msg": "Planeta actualizado con éxito", "planet": planet.serialize()}), 200
+
+@app.route('/planets/<int:planet_id>', methods=['DELETE'])
+def delete_planet(planet_id):
+    planet = Planet.query.get(planet_id)
+    if not planet:
+        return jsonify({"msg": "Planeta no encontrado"}), 404
+        
+    db.session.delete(planet)
+    db.session.commit()
+    return jsonify({"msg": f"Planeta {planet.name} eliminado de la base de datos con éxito"}), 200
 
 
 @app.route('/favorite/planet/<int:planet_id>', methods=['POST'])
